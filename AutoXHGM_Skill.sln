@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36310.24
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoXHGM_Skill", "AutoXHGM_Skill.csproj", "{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}.Debug|x64.ActiveCfg = Debug|x64
+		{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}.Debug|x64.Build.0 = Debug|x64
+		{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}.Release|x64.ActiveCfg = Release|x64
+		{93FC46AE-12FB-463C-A32B-F9A60C5D5E9F}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ABF83BD0-3FA8-4E22-83A7-0EE7D9BC97E0}
+	EndGlobalSection
+EndGlobal
