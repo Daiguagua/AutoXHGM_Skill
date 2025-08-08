@@ -1,5 +1,6 @@
 星痕共鸣技能循环助手
-上班摸鱼产物（以下README 由deepseek亲自完成x 因为本人也不太会用github hh
+上班摸鱼产物，代码也大部分都是deepseek写的，因为太刀循环太麻烦了，所以写个小程序，开源给各位太刀虾一起用hh（以下README 由deepseek亲自完成x 因为本人也不太会用github hh 
+
 项目概述
 这是一个为游戏《星痕共鸣》设计的技能循环自动化工具。程序通过检测游戏窗口中特定位置的颜色条件，自动触发预设的技能按键序列，帮助玩家实现高效的技能循环。
 
@@ -26,6 +27,7 @@ Fischless.WindowsInput (输入模拟库)
 Hardcodet.Wpf.TaskbarNotification (系统托盘库)
 
 特别感谢 Fischless.WindowsInput 库提供的高质量输入模拟功能。
+https://github.com/GenshinMatrix/Fischless
 
 使用说明
 安装要求
@@ -87,22 +89,11 @@ Hardcodet.Wpf.TaskbarNotification (系统托盘库)
 
 右键或ESC取消
 
-项目结构
-
-AutoXHGM_Skill/
-├── MainWindow.xaml             # 主界面
-├── MainWindow.xaml.cs          # 主界面逻辑
-├── ConditionEditorWindow.xaml  # 条件编辑窗口
-├── ConditionEditorWindow.xaml.cs
-├── ProfessionalColorPicker.cs  # 专业取色器
-├── Win32PointHelper.cs         # Win32坐标辅助类
-├── Win32ColorHelper.cs         # Win32颜色辅助类
-├── RelayCommand.cs             # 命令模式实现
 构建说明
 克隆仓库：
 
 bash
-git clone https://github.com/yourusername/AutoXHGM_Skill.git
+git clone https://github.com/Daiguagua/AutoXHGM_Skill.git
 使用Visual Studio 2022或更高版本打开解决方案
 
 安装所需NuGet包：
