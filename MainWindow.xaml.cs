@@ -273,6 +273,7 @@ namespace AutoXHGM_Skill
 
         private void RegisterHotkeys()
         {
+            Debug.WriteLine($"开始注册热键 - 启动键:{_startHotKey}, 停止键:{_stopHotKey}");
             // 重置重试计数
             if (_registerRetryCount == 0)
             {
@@ -771,6 +772,12 @@ namespace AutoXHGM_Skill
         {
             if (cbGameWindows.SelectedItem is WindowInfo selectedWindow)
             {
+                // 从界面读取最新的热键设置
+                _startHotKey = (cbStartHotKey.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "~";
+                _stopHotKey = (cbStopHotKey.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "~";
+                // 重新注册热键
+                UnregisterHotkeys();
+                RegisterHotkeys();
                 _selectedWindowHandle = selectedWindow.Handle;
                 _isRunning = true;
                 btnStart.IsEnabled = false;
@@ -822,6 +829,9 @@ namespace AutoXHGM_Skill
             // 隐藏调试点
             debugCanvas.Visibility = Visibility.Collapsed;
             StopPositionTracking();
+            // 停止后重新注册热键
+            UnregisterHotkeys();
+            RegisterHotkeys();
         }
         private const int SW_RESTORE = 9;
         [DllImport("user32.dll")]
@@ -850,7 +860,7 @@ namespace AutoXHGM_Skill
             foreach (var rule in Rules.Where(r => r.IsEnabled))
             {
                 Debug.WriteLine($"检查规则: {rule.Key}, 条件数={rule.Conditions.Count}");
-
+                bool skipRule = false;
                 bool allConditionsMet = true;
                 int conditionIndex = 0;
                 // 检查所有条件是否都满足
@@ -874,31 +884,33 @@ namespace AutoXHGM_Skill
                     Debug.WriteLine($"客户区偏移: X{clientOffset.X} Y{clientOffset.Y}");
                     Debug.WriteLine($"条件偏移: X{condition.OffsetX} Y{condition.OffsetY}");
                     Debug.WriteLine($"绝对坐标: X{absoluteX} Y{absoluteY}");
-                    if (!isMatch)
+                    // 检查跳过条件
+                    if (condition.IsSkipCondition && isMatch)
+                    {
+                        skipRule = true;
+                        Debug.WriteLine($"跳过规则 {rule.Key}，跳过条件满足");
+                        break;
+                    }
+                    // 检查普通条件
+                    if (!condition.IsSkipCondition && !isMatch)
                     {
                         allConditionsMet = false;
-                        Debug.WriteLine($"条件#{conditionIndex}不匹配，跳过规则 {rule.Key}");
                         break;
                     }
                     conditionIndex++;
                 }
+                // 跳过规则或条件不满足
+                if (skipRule || !allConditionsMet) continue;
+                // 执行按键
+                PressKey(rule.Key);
 
-                if (allConditionsMet)
+                // 根据规则频率延迟
+                if (rule.CheckInterval > 0)
                 {
-                    Debug.WriteLine($"规则 {rule.Key} 所有条件满足，执行按键");
-                    // 执行按键
-                    PressKey(rule.Key);
-
-                    // 根据规则频率延迟
-                    if (rule.CheckInterval > 0)
-                    {
-                        Thread.Sleep(rule.CheckInterval);
-                    }
-
-                    // 只执行匹配的第一个规则
-                    break;
+                    Thread.Sleep(rule.CheckInterval);
                 }
-
+                // 只执行匹配的第一个规则
+                break;
             }
         }
 
@@ -1263,6 +1275,7 @@ namespace AutoXHGM_Skill
                     result.AppendLine($"  目标颜色: R:{condition.TargetColor.R} G:{condition.TargetColor.G} B:{condition.TargetColor.B}");
                     result.AppendLine($"  实际颜色: R:{pixelColor.R} G:{pixelColor.G} B:{pixelColor.B}");
                     result.AppendLine($"  容差: {condition.Tolerance}");
+                    result.AppendLine($"  跳过规则: {condition.IsSkipCondition}");
                     result.AppendLine($"  匹配: {isMatch}");
                     result.AppendLine();
 
@@ -1436,6 +1449,12 @@ namespace AutoXHGM_Skill
 
     public class SkillCondition : INotifyPropertyChanged
     {
+        private bool _isSkipCondition;
+        public bool IsSkipCondition
+        {
+            get => _isSkipCondition;
+            set { _isSkipCondition = value; OnPropertyChanged(nameof(IsSkipCondition)); }
+        }
         private int _offsetX;
         private int _offsetY;
         private Color _targetColor;

@@ -17,8 +17,10 @@
         <DataGrid Grid.Row="1" x:Name="dgConditions" AutoGenerateColumns="False" 
                   ItemsSource="{Binding Conditions}" Margin="10"
             MouseDoubleClick="DgConditions_MouseDoubleClick">
+            
             <!-- 添加双击事件 -->
             <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="跳过规则" Binding="{Binding IsSkipCondition}" Width="80"/>
                 <DataGridTextColumn Header="X偏移" Binding="{Binding OffsetX}" Width="80"/>
                 <DataGridTextColumn Header="Y偏移" Binding="{Binding OffsetY}" Width="80"/>
                 <DataGridTemplateColumn Header="目标颜色" Width="120">
@@ -42,6 +44,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
+            
         </DataGrid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
@@ -56,5 +59,6 @@
                    VerticalAlignment="Center" 
                    Margin="5,0,0,0"/>
         </StackPanel>
+        
     </Grid>
 </Window>
