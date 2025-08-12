@@ -279,14 +279,20 @@ namespace AutoXHGM_Skill
         {
             try
             {
-                // 使用新的热键库注册
+                // 先卸载所有热键
+                HotkeyHolder.UnregisterHotKey();
+                // 注册启动/停止切换热键
                 HotkeyHolder.RegisterHotKey(_startHotKey, HotkeyPressed);
-                HotkeyHolder.RegisterHotKey(_stopHotKey, HotkeyPressed);
+
+                // 只有当停止热键不同时才注册
+                if (_startHotKey != _stopHotKey)
+                {
+                    HotkeyHolder.RegisterHotKey(_stopHotKey, HotkeyPressed);
+                }
             }
             catch (InvalidOperationException ex)
             {
-                // 捕获热键冲突
-                Debug.WriteLine($"热键冲突: {ex.Message}");
+                Debug.WriteLine($"热键注册失败: {ex.Message}");
                 System.Windows.MessageBox.Show($"热键注册失败: {ex.Message}\n请修改热键设置",
                                "热键冲突",
                                MessageBoxButton.OK,
@@ -298,13 +304,23 @@ namespace AutoXHGM_Skill
         {
             Dispatcher.Invoke(() =>
             {
+                // 统一处理同一个热键的启动/停止切换
                 if (e.Key == GetKeyFromString(_startHotKey))
                 {
-                    if (!_isRunning) StartSkillLoop();
+                    // 切换状态：运行则停止，未运行则启动
+                    if (_isRunning)
+                    {
+                        StopSkillLoop();
+                    }
+                    else
+                    {
+                        StartSkillLoop();
+                    }
                 }
-                else if (e.Key == GetKeyFromString(_stopHotKey))
+                // 保留独立的停止热键处理（可选）
+                else if (e.Key == GetKeyFromString(_stopHotKey) && _isRunning)
                 {
-                    if (_isRunning) StopSkillLoop();
+                    StopSkillLoop();
                 }
             });
         }
@@ -780,7 +796,7 @@ namespace AutoXHGM_Skill
                 tbActive.Foreground = new SolidColorBrush(Colors.Green);
 
                 // 最小化到托盘
-                //HideToTray();
+                HideToTray();
 
                 int interval = int.TryParse(txtGlobalInterval.Text, out int globalInterval) ? globalInterval : 50;
 
@@ -812,7 +828,7 @@ namespace AutoXHGM_Skill
             tbActive.Foreground = new SolidColorBrush(Colors.Gray);
 
             // 不自动显示窗口，保持托盘状态
-            // ShowFromTray(); // 注释掉这行，保持后台运行
+            //ShowFromTray(); // 注释掉这行，保持后台运行
 
             if (_checkTimer != null)
             {
@@ -1447,6 +1463,7 @@ namespace AutoXHGM_Skill
             get => _isSkipCondition;
             set { _isSkipCondition = value; OnPropertyChanged(nameof(IsSkipCondition)); }
         }
+
         private int _offsetX;
         private int _offsetY;
         private Color _targetColor;

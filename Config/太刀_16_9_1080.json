@@ -1,0 +1,189 @@
+{
+  "Rules": [
+    {
+      "IsEnabled": true,
+      "Key": "3",
+      "Conditions": [
+        {
+          "IsSkipCondition": false,
+          "x": 1301,
+          "y": 849,
+          "color": {
+            "R": 255,
+            "G": 255,
+            "B": 255,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ffffffff"
+          },
+          "tol": 10
+        },
+        {
+          "IsSkipCondition": false,
+          "x": 1194,
+          "y": 875,
+          "color": {
+            "R": 203,
+            "G": 176,
+            "B": 240,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ffcbb0f0"
+          },
+          "tol": 10
+        },
+        {
+          "IsSkipCondition": false,
+          "x": 874,
+          "y": 987,
+          "color": {
+            "R": 197,
+            "G": 197,
+            "B": 197,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ffc5c5c5"
+          },
+          "tol": 10
+        }
+      ]
+    },
+    {
+      "IsEnabled": true,
+      "Key": "2",
+      "Conditions": [
+        {
+          "IsSkipCondition": false,
+          "x": 1095,
+          "y": 841,
+          "color": {
+            "R": 229,
+            "G": 161,
+            "B": 255,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ffe5a1ff"
+          },
+          "tol": 10
+        },
+        {
+          "IsSkipCondition": true,
+          "x": 1196,
+          "y": 878,
+          "color": {
+            "R": 215,
+            "G": 190,
+            "B": 255,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ffd7beff"
+          },
+          "tol": 10
+        }
+      ]
+    },
+    {
+      "IsEnabled": true,
+      "Key": "2",
+      "Conditions": [
+        {
+          "IsSkipCondition": false,
+          "x": 840,
+          "y": 952,
+          "color": {
+            "R": 128,
+            "G": 100,
+            "B": 150,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ff806496"
+          },
+          "tol": 10
+        },
+        {
+          "IsSkipCondition": true,
+          "x": 1193,
+          "y": 877,
+          "color": {
+            "R": 209,
+            "G": 181,
+            "B": 248,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ffd1b5f8"
+          },
+          "tol": 10
+        }
+      ]
+    },
+    {
+      "IsEnabled": true,
+      "Key": "1",
+      "Conditions": [
+        {
+          "IsSkipCondition": false,
+          "x": 1196,
+          "y": 879,
+          "color": {
+            "R": 222,
+            "G": 189,
+            "B": 255,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ffdebdff"
+          },
+          "tol": 10
+        },
+        {
+          "IsSkipCondition": false,
+          "x": 1301,
+          "y": 849,
+          "color": {
+            "R": 255,
+            "G": 255,
+            "B": 255,
+            "A": 255,
+            "IsKnownColor": false,
+            "IsEmpty": false,
+            "IsNamedColor": false,
+            "IsSystemColor": false,
+            "Name": "ffffffff"
+          },
+          "tol": 10
+        }
+      ]
+    },
+    {
+      "IsEnabled": true,
+      "Key": "\u9F20\u6807\u5DE6\u952E",
+      "Conditions": []
+    }
+  ],
+  "StartHotKey": "~",
+  "StopHotKey": "~",
+  "SelectedWindowTitle": "\u661F\u75D5\u5171\u9E23"
+}
