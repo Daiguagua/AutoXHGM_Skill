@@ -63,18 +63,18 @@
       "Conditions": [
         {
           "IsSkipCondition": false,
-          "x": 1095,
-          "y": 841,
+          "x": 1099,
+          "y": 843,
           "color": {
-            "R": 229,
-            "G": 161,
-            "B": 255,
+            "R": 95,
+            "G": 62,
+            "B": 128,
             "A": 255,
             "IsKnownColor": false,
             "IsEmpty": false,
             "IsNamedColor": false,
             "IsSystemColor": false,
-            "Name": "ffe5a1ff"
+            "Name": "ff5f3e80"
           },
           "tol": 10
         },
