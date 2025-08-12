@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:AutoXHGM_Skill"
         mc:Ignorable="d"
         Title="星痕共鸣技能循环助手" Height="700" Width="900" WindowStartupLocation="CenterScreen"
-        Icon="app.ico" Loaded="Window_Loaded">
+        Icon="app.ico">
     <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Margin" Value="5"/>
@@ -134,7 +134,7 @@
                             <DataGridCheckBoxColumn Header="启用" Binding="{Binding IsEnabled}" Width="50"/>
                             <DataGridTextColumn Header="技能按键" Binding="{Binding Key}" Width="80"/>
                             <DataGridTextColumn Header="条件数量" Binding="{Binding Conditions.Count}" Width="80"/>
-                            <DataGridTextColumn Header="检测频率(ms)" Binding="{Binding CheckInterval}" Width="100"/>
+                            <!--<DataGridTextColumn Header="检测频率(ms)" Binding="{Binding CheckInterval}" Width="100"/>-->
                             <DataGridTemplateColumn Header="操作" Width="*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -155,7 +155,7 @@
                         <TextBox x:Name="txtGlobalInterval" Text="50"/>
                         <!-- 添加热键设置 -->
                         <Label Content="启动热键:"/>
-                        <ComboBox x:Name="cbStartHotKey" SelectedIndex="7">
+                        <ComboBox x:Name="cbStartHotKey" SelectedIndex="12">
                             <!-- 默认选择波浪号 -->
                             <!-- 数字键 -->
                             <ComboBoxItem>0</ComboBoxItem>
@@ -223,7 +223,7 @@
                         </ComboBox>
 
                         <Label Content="停止热键:"/>
-                        <ComboBox x:Name="cbStopHotKey" SelectedIndex="7">
+                        <ComboBox x:Name="cbStopHotKey" SelectedIndex="12">
                             <!-- 默认选择波浪号 -->
                             <!-- 重复上面的选项 -->
                             <ComboBoxItem>0</ComboBoxItem>
