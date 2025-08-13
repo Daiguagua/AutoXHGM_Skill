@@ -148,14 +148,18 @@
             </GroupBox>
 
             <!-- 设置区域 -->
+
             <StackPanel Grid.Column="1" Width="250" Margin="5">
                 <GroupBox Header="全局设置" Margin="0,5">
-                    <StackPanel>
+                    <StackPanel >
                         <Label Content="全局检测频率 (ms):"/>
                         <TextBox x:Name="txtGlobalInterval" Text="50"/>
                         <!-- 添加热键设置 -->
+                        <CheckBox x:Name="chkstartCtrl" Content="Ctrl" Margin="0,0,5,0" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
+                        <CheckBox x:Name="chkstartShift" Content="Shift" Margin="0,0,5,0" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
+                        <CheckBox x:Name="chkstartAlt" Content="Alt" Margin="0,0,5,0" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
                         <Label Content="启动热键:"/>
-                        <ComboBox x:Name="cbStartHotKey" SelectedIndex="12">
+                        <ComboBox x:Name="cbStartHotKey" SelectedIndex="25" SelectionChanged="HotKeyComboBox_SelectionChanged">
                             <!-- 默认选择波浪号 -->
                             <!-- 数字键 -->
                             <ComboBoxItem>0</ComboBoxItem>
@@ -221,9 +225,11 @@
                             <ComboBoxItem>小键盘8</ComboBoxItem>
                             <ComboBoxItem>小键盘9</ComboBoxItem>
                         </ComboBox>
-
+                        <CheckBox x:Name="chkstopCtrl" Content="Ctrl" Margin="0,0,5,0" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
+                        <CheckBox x:Name="chkstopShift" Content="Shift" Margin="0,0,5,0" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
+                        <CheckBox x:Name="chkstopAlt" Content="Alt" Margin="0,0,5,0" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
                         <Label Content="停止热键:"/>
-                        <ComboBox x:Name="cbStopHotKey" SelectedIndex="12">
+                        <ComboBox x:Name="cbStopHotKey" SelectedIndex="25" SelectionChanged="HotKeyComboBox_SelectionChanged">
                             <!-- 默认选择波浪号 -->
                             <!-- 重复上面的选项 -->
                             <ComboBoxItem>0</ComboBoxItem>

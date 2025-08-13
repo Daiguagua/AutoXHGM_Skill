@@ -89,8 +89,6 @@ namespace AutoXHGM_Skill
         private string _startHotKey = "~";
         private string _stopHotKey = "~";
 
-        private HwndSource _source;
-        private const int WM_HOTKEY = 0x0312;
 
         private readonly List<Ellipse> _debugPoints = new List<Ellipse>();
         private DispatcherTimer _positionUpdateTimer;
@@ -185,20 +183,16 @@ namespace AutoXHGM_Skill
             RefreshWindows();
             // 初始化系统托盘
             InitializeTrayIcon();
-            Loaded += (s, e) => RegisterHotkeys();
-            //Closed += (s, e) => UnregisterHotkeys();
-            // 修改配置文件路径到AppData目录
+            // 简化热键注册
+            Loaded += (s, e) => {
+                // 延迟注册确保窗口完全加载
+                Dispatcher.BeginInvoke(() => RegisterHotkeys(), DispatcherPriority.ApplicationIdle);
+            };
+
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             _configFilePath = System.IO.Path.Combine(appData, "AutoXHGM_Skill", "skill_config.json");
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_configFilePath));
         }
-        //protected override void OnSourceInitialized(EventArgs e)
-        //{
-        //    base.OnSourceInitialized(e);
-
-        //    // 在窗口源初始化后注册热键
-        //    RegisterHotkeys();
-        //}
         private void InitializeTrayIcon()
         {
             _trayIcon = new TaskbarIcon
@@ -264,8 +258,9 @@ namespace AutoXHGM_Skill
             // 清理热键
             try
             {
-                //UnregisterHotkeys();
-                CleanupHwndSource();
+                // 只清理新热键系统
+                HotkeyHolder.UnregisterHotKey();
+                Debug.WriteLine("[CLEANUP] 热键已注销");
             }
             catch (Exception ex)
             {
@@ -279,62 +274,193 @@ namespace AutoXHGM_Skill
         {
             try
             {
-                // 先卸载所有热键
-                HotkeyHolder.UnregisterHotKey();
-                // 注册启动/停止切换热键
-                HotkeyHolder.RegisterHotKey(_startHotKey, HotkeyPressed);
+                Debug.WriteLine("[HOTKEY] 开始重新注册热键");
 
-                // 只有当停止热键不同时才注册
-                if (_startHotKey != _stopHotKey)
+                // 先清理所有热键
+                HotkeyHolder.UnregisterHotKey();
+
+                // 延迟一下确保清理完成
+                Thread.Sleep(100);
+
+                // 只注册启动热键（用于切换状态）
+                if (!string.IsNullOrEmpty(_startHotKey))
                 {
-                    HotkeyHolder.RegisterHotKey(_stopHotKey, HotkeyPressed);
+                    Debug.WriteLine($"[HOTKEY] 准备注册热键: '{_startHotKey}'");
+                    HotkeyHolder.RegisterHotKey(_startHotKey, HotkeyPressed);
+                    Debug.WriteLine($"[HOTKEY] 热键注册完成: '{_startHotKey}'");
+                }
+                else
+                {
+                    Debug.WriteLine("[HOTKEY] 启动热键为空，跳过注册");
                 }
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                Debug.WriteLine($"热键注册失败: {ex.Message}");
+                Debug.WriteLine($"[ERROR] 热键注册异常: {ex.Message}");
+                Debug.WriteLine($"[ERROR] 堆栈跟踪: {ex.StackTrace}");
                 System.Windows.MessageBox.Show($"热键注册失败: {ex.Message}\n请修改热键设置",
-                               "热键冲突",
-                               MessageBoxButton.OK,
-                               MessageBoxImage.Warning);
+                               "热键冲突", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         // 新的热键处理函数
         private void HotkeyPressed(object sender, KeyPressedEventArgs e)
         {
-            Dispatcher.Invoke(() =>
+            Debug.WriteLine("=== 热键事件开始 ===");
+            Debug.WriteLine($"[HOTKEY_EVENT] ✅ 收到热键事件!");
+            Debug.WriteLine($"[HOTKEY_EVENT] Sender: {sender?.GetType().Name}");
+            Debug.WriteLine($"[HOTKEY_EVENT] Modifier: {e.Modifier}");
+            Debug.WriteLine($"[HOTKEY_EVENT] Key: {e.Key}");
+            Debug.WriteLine($"[HOTKEY_EVENT] 时间: {DateTime.Now:HH:mm:ss.fff}");
+
+            try
             {
-                // 统一处理同一个热键的启动/停止切换
-                if (e.Key == GetKeyFromString(_startHotKey))
+                Dispatcher.Invoke(() =>
                 {
-                    // 切换状态：运行则停止，未运行则启动
-                    if (_isRunning)
+                    string pressedHotkey = BuildPressedHotkeyString(e);
+                    Debug.WriteLine($"[HOTKEY] 构建的热键字符串: '{pressedHotkey}'");
+                    Debug.WriteLine($"[HOTKEY] 期望的启动热键: '{_startHotKey}'");
+
+                    if (pressedHotkey == _startHotKey)
                     {
-                        StopSkillLoop();
+                        Debug.WriteLine("[HOTKEY] ✅ 热键匹配成功!");
+
+                        if (_isRunning)
+                        {
+                            StopSkillLoop();
+                            Debug.WriteLine("[HOTKEY] 停止技能循环");
+                        }
+                        else
+                        {
+                            StartSkillLoop();
+                            Debug.WriteLine("[HOTKEY] 启动技能循环");
+                        }
                     }
                     else
                     {
-                        StartSkillLoop();
+                        Debug.WriteLine($"[HOTKEY] ❌ 热键不匹配");
+                        Debug.WriteLine($"[HOTKEY] 期望: '{_startHotKey}'");
+                        Debug.WriteLine($"[HOTKEY] 实际: '{pressedHotkey}'");
                     }
-                }
-                // 保留独立的停止热键处理（可选）
-                else if (e.Key == GetKeyFromString(_stopHotKey) && _isRunning)
-                {
-                    StopSkillLoop();
-                }
-            });
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ERROR] 热键处理异常: {ex.Message}");
+                Debug.WriteLine($"[ERROR] 堆栈跟踪: {ex.StackTrace}");
+            }
+
+            Debug.WriteLine("=== 热键事件结束 ===");
+        }
+        private string BuildPressedHotkeyString(KeyPressedEventArgs e)
+        {
+            var builder = new StringBuilder();
+
+            // 添加修饰键
+            if (e.Modifier.HasFlag(User32.HotKeyModifiers.MOD_CONTROL))
+                builder.Append("Ctrl + ");
+            if (e.Modifier.HasFlag(User32.HotKeyModifiers.MOD_SHIFT))
+                builder.Append("Shift + ");
+            if (e.Modifier.HasFlag(User32.HotKeyModifiers.MOD_ALT))
+                builder.Append("Alt + ");
+
+            // 添加主键，需要反向映射
+            string keyName = GetKeyDisplayName(e.Key);
+            builder.Append(keyName);
+
+            return builder.ToString().TrimEnd(' ', '+');
+        }
+        private string GetKeyDisplayName(Keys key)
+        {
+            return key switch
+            {
+                Keys.XButton1 => "鼠标侧键1",
+                Keys.XButton2 => "鼠标侧键2",
+                Keys.MButton => "鼠标中键",
+                Keys.Oem3 => "~",
+                // ... 其他映射
+                _ => key.ToString()
+            };
+        }
+        private User32.HotKeyModifiers GetCurrentModifiers(bool isStart)
+        {
+            var modifiers = User32.HotKeyModifiers.MOD_NONE;
+
+            if (isStart)
+            {
+                if (chkstartCtrl.IsChecked == true) modifiers |= User32.HotKeyModifiers.MOD_CONTROL;
+                if (chkstartShift.IsChecked == true) modifiers |= User32.HotKeyModifiers.MOD_SHIFT;
+                if (chkstartAlt.IsChecked == true) modifiers |= User32.HotKeyModifiers.MOD_ALT;
+            }
+            else
+            {
+                if (chkstopCtrl.IsChecked == true) modifiers |= User32.HotKeyModifiers.MOD_CONTROL;
+                if (chkstopShift.IsChecked == true) modifiers |= User32.HotKeyModifiers.MOD_SHIFT;
+                if (chkstopAlt.IsChecked == true) modifiers |= User32.HotKeyModifiers.MOD_ALT;
+            }
+
+            return modifiers;
         }
         // 辅助方法：将字符串转换为Keys枚举
         private Keys GetKeyFromString(string keyStr)
         {
             return keyStr switch
             {
+                // 数字键
+                "0" => Keys.D0,
+                "1" => Keys.D1,
+                "2" => Keys.D2,
+                "3" => Keys.D3,
+                "4" => Keys.D4,
+                "5" => Keys.D5,
+                "6" => Keys.D6,
+                "7" => Keys.D7,
+                "8" => Keys.D8,
+                "9" => Keys.D9,
+
+                // 符号键
+                ";" => Keys.Oem1,
+                "?" => Keys.Oem2,
                 "~" => Keys.Oem3,
+                "[" => Keys.Oem4,
+                "\\" => Keys.Oem5,
+                "]" => Keys.Oem6,
+                "," => Keys.Oemcomma,
+                "." => Keys.OemPeriod,
+                "=" => Keys.Oemplus,
+                "-" => Keys.OemMinus,
+
+                // 功能键
                 "F9" => Keys.F9,
+                "F10" => Keys.F10,
+                "F11" => Keys.F11,
+                "F12" => Keys.F12,
+
+                // 鼠标键
                 "鼠标中键" => Keys.MButton,
                 "鼠标侧键1" => Keys.XButton1,
                 "鼠标侧键2" => Keys.XButton2,
-                _ => Keys.None
+                "鼠标滚轮上" => Keys.None,  // 需要特殊处理
+                "鼠标滚轮下" => Keys.None,  // 需要特殊处理
+
+                // 小键盘
+                "小键盘/" => Keys.Divide,
+                "小键盘*" => Keys.Multiply,
+                "小键盘-" => Keys.Subtract,
+                "小键盘+" => Keys.Add,
+                "小键盘." => Keys.Decimal,
+                "小键盘0" => Keys.NumPad0,
+                "小键盘1" => Keys.NumPad1,
+                "小键盘2" => Keys.NumPad2,
+                "小键盘3" => Keys.NumPad3,
+                "小键盘4" => Keys.NumPad4,
+                "小键盘5" => Keys.NumPad5,
+                "小键盘6" => Keys.NumPad6,
+                "小键盘7" => Keys.NumPad7,
+                "小键盘8" => Keys.NumPad8,
+                "小键盘9" => Keys.NumPad9,
+
+                // 字母键（添加这行）
+                _ => (Keys)Enum.Parse(typeof(Keys), keyStr, true)
             };
         }
         // 在窗口关闭时注销热键
@@ -408,40 +534,6 @@ namespace AutoXHGM_Skill
         //    ShowHotkeyError();
         //}
 
-        private void DelayedRetry()
-        {
-            if (_retryCount < MAX_RETRY_COUNT)
-            {
-                _retryCount++;
-                Task.Delay(500).ContinueWith(_ =>
-                {
-                    Dispatcher.Invoke(RegisterHotkeys);
-                });
-            }
-            else
-            {
-                ShowHotkeyError();
-            }
-        }
-        private void CleanupHwndSource()
-        {
-            if (_source != null)
-            {
-                try
-                {
-                    _source.RemoveHook(HwndHook);
-                    _source.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"清理 HwndSource 时出错: {ex.Message}");
-                }
-                finally
-                {
-                    _source = null;
-                }
-            }
-        }
         private void ShowHotkeyError()
         {
             tbStatus.Text = "热键注册失败，请手动控制";
@@ -525,81 +617,6 @@ namespace AutoXHGM_Skill
                 _ => VK_OEM_3 // 默认波浪号
             };
         }
-        private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            if (msg == WM_HOTKEY)
-            {
-                // 添加处理锁防止重入
-                if (_isHotKeyProcessing) return IntPtr.Zero;
-                _isHotKeyProcessing = true;
-
-                try
-                {
-                    int id = wParam.ToInt32();
-                    uint vkCode = (uint)((int)lParam >> 16) & 0xFFFF;
-                    uint currentStartVk = GetVkCode(_startHotKey);
-                    uint currentStopVk = GetVkCode(_stopHotKey);
-
-                    // 使用BeginInvoke避免阻塞UI线程
-                    Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        if (vkCode == currentStartVk)
-                        {
-                            if (!_isRunning) StartSkillLoop();
-                            else StopSkillLoop();
-                        }
-                        else if (vkCode == currentStopVk && _isRunning)
-                        {
-                            StopSkillLoop();
-                        }
-                    }));
-                }
-                finally
-                {
-                    _isHotKeyProcessing = false;
-                }
-                handled = true;
-            }
-            return IntPtr.Zero;
-        }
-        //private void InitializeRules()
-        //{
-        //    // 如果没有加载到配置，添加示例规则
-        //    if (Rules.Count == 0)
-        //    {
-        //        Rules.Add(new SkillRule
-        //        {
-        //            Key = "Q",
-        //            Conditions = new ObservableCollection<SkillCondition>
-        //            {
-        //                new SkillCondition
-        //                {
-        //                    OffsetX = 100,
-        //                    OffsetY = 200,
-        //                    TargetColor = Color.Red,
-        //                    Tolerance = 10
-        //                }
-        //            },
-        //            CheckInterval = 50
-        //        });
-
-        //        Rules.Add(new SkillRule
-        //        {
-        //            Key = "E",
-        //            Conditions = new ObservableCollection<SkillCondition>
-        //            {
-        //                new SkillCondition
-        //                {
-        //                    OffsetX = 150,
-        //                    OffsetY = 250,
-        //                    TargetColor = Color.Green,
-        //                    Tolerance = 10
-        //                }
-        //            },
-        //            CheckInterval = 100
-        //        });
-        //    }
-        //}
 
         private void RefreshWindows_Click(object sender, RoutedEventArgs e)
         {
@@ -782,8 +799,8 @@ namespace AutoXHGM_Skill
             if (cbGameWindows.SelectedItem is WindowInfo selectedWindow)
             {
                 // 从界面读取最新的热键设置
-                _startHotKey = (cbStartHotKey.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "~";
-                _stopHotKey = (cbStopHotKey.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "~";
+                //_startHotKey = (cbStartHotKey.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "~";
+                //_stopHotKey = (cbStopHotKey.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "~";
                 // 重新注册热键
                 //UnregisterHotkeys();
                 RegisterHotkeys();
@@ -841,17 +858,11 @@ namespace AutoXHGM_Skill
             // 停止后重新注册热键
             //UnregisterHotkeys();
             RegisterHotkeys();
+
         }
         private const int SW_RESTORE = 9;
         [DllImport("user32.dll")]
         private static extern bool ClientToScreen(IntPtr hWnd, ref Point lpPoint);
-        private Point GetClientTopLeft(IntPtr hwnd)
-        {
-            GetWindowRect(hwnd, out RECT windowRect);
-            Point clientPoint = new Point(windowRect.Left, windowRect.Top);
-            ClientToScreen(hwnd, ref clientPoint);
-            return new Point(clientPoint.X - windowRect.Left, clientPoint.Y - windowRect.Top);
-        }
         private void CheckRules(object sender, EventArgs e)
         {
             if (_selectedWindowHandle == IntPtr.Zero) return;
@@ -935,6 +946,11 @@ namespace AutoXHGM_Skill
                     _inputSimulator.Mouse.LeftButtonClick();
                     return;
                 }
+                // 在PressKey方法中添加
+                if (key == "鼠标滚轮上")
+                    _inputSimulator.Mouse.VerticalScroll(1);
+                else if (key == "鼠标滚轮下")
+                    _inputSimulator.Mouse.VerticalScroll(-1);
                 // 模拟按键
                 _inputSimulator.Keyboard.KeyPress((User32.VK)Enum.Parse(typeof(User32.VK), $"VK_{key}"));
             }
@@ -1296,7 +1312,7 @@ namespace AutoXHGM_Skill
 
         protected override void OnClosed(EventArgs e)
         {
-            CleanupHwndSource();
+            //CleanupHwndSource();
             HotkeyHolder.UnregisterHotKey();
             StopPositionTracking();
             if (_trayIcon != null)
@@ -1411,13 +1427,146 @@ namespace AutoXHGM_Skill
                 return string.Empty;
             }
         }
+        private void HotKeyComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateHotkey();
+        }
+        private void CheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            UpdateHotkey();
+        }
+        private void UpdateHotkey()
+        {
+            // 确保窗口已加载完成
+            if (!IsLoaded) return;
+            // 先注销当前所有热键
+            HotkeyHolder.UnregisterHotKey();
+            // 构建正确的热键格式
+            _startHotKey = BuildHotkeyString(true);
+            _stopHotKey = BuildHotkeyString(false);
+
+            // 重新注册热键
+            RegisterHotkeys();
+        }
+        private string BuildHotkeyString(bool isStart)
+        {
+            StringBuilder builder = new StringBuilder();
+
+            // 添加空格确保正确解析
+            if (isStart ? chkstartCtrl.IsChecked == true : chkstopCtrl.IsChecked == true)
+                builder.Append("Ctrl + ");
+
+            if (isStart ? chkstartShift.IsChecked == true : chkstopShift.IsChecked == true)
+                builder.Append("Shift + ");
+
+            if (isStart ? chkstartAlt.IsChecked == true : chkstopAlt.IsChecked == true)
+                builder.Append("Alt + ");
+
+            // 添加主键（使用修正后的格式）
+            var combo = isStart ? cbStartHotKey : cbStopHotKey;
+            if (combo.SelectedItem is ComboBoxItem item)
+            {
+                builder.Append(item.Content.ToString());
+            }
+
+            return builder.ToString().TrimEnd(' ', '+'); // 清理尾部多余字符
+        }
 
         #endregion
+        private void TestMouseSideButtons()
+        {
+            Debug.WriteLine("[TEST] 开始测试鼠标侧键支持");
 
-        //private async void Window_Loaded(object sender, RoutedEventArgs e)
-        //{
-        //    await InitializeHotkeysAsync();
-        //}
+            // 测试系统是否支持鼠标侧键
+            int xButtonCount = SystemInformation.MouseButtons;
+            Debug.WriteLine($"[TEST] 系统报告的鼠标按键数量: {xButtonCount}");
+
+            // 测试鼠标侧键的虚拟键码
+            bool xButton1Supported = User32.GetKeyState((int)Keys.XButton1) != -1;
+            bool xButton2Supported = User32.GetKeyState((int)Keys.XButton2) != -1;
+
+            Debug.WriteLine($"[TEST] XButton1 支持: {xButton1Supported}");
+            Debug.WriteLine($"[TEST] XButton2 支持: {xButton2Supported}");
+        }
+        private void TestMouseSideKeyRegistration()
+        {
+            Debug.WriteLine("=== 开始测试鼠标侧键注册 ===");
+
+            try
+            {
+                // 测试直接注册
+                var testHook = new HotkeyHook();
+                testHook.KeyPressed += (s, e) => {
+                    Debug.WriteLine($"[TEST] 直接注册收到事件: {e.Key}");
+                };
+
+                testHook.RegisterHotKey(User32.HotKeyModifiers.MOD_NONE, Keys.XButton1);
+                Debug.WriteLine("[TEST] 直接注册成功");
+
+                Thread.Sleep(5000); // 等待5秒测试
+
+                testHook.UnregisterHotKey();
+                testHook.Dispose();
+                Debug.WriteLine("[TEST] 直接注册测试完成");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[TEST] 直接注册失败: {ex.Message}");
+            }
+        }
+
+        private void TestSingleMouseKey(string keyName, Keys key)
+        {
+            try
+            {
+                // 直接测试底层注册
+                var testHook = new HotkeyHook();
+                testHook.RegisterHotKey(User32.HotKeyModifiers.MOD_NONE, key);
+                Debug.WriteLine($"[SUCCESS] {keyName} 底层注册成功");
+                testHook.UnregisterHotKey();
+                testHook.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[FAILED] {keyName} 底层注册失败: {ex.Message}");
+            }
+
+            try
+            {
+                // 测试通过 HotkeyHolder 注册
+                HotkeyHolder.RegisterHotKey(keyName, (s, e) => {
+                    Debug.WriteLine($"[EVENT] {keyName} 被按下");
+                });
+                Debug.WriteLine($"[SUCCESS] {keyName} HotkeyHolder 注册成功");
+                HotkeyHolder.UnregisterHotKey();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[FAILED] {keyName} HotkeyHolder 注册失败: {ex.Message}");
+            }
+        }
+
+        private void TestCombinationKey(string hotkey)
+        {
+            try
+            {
+                HotkeyHolder.RegisterHotKey(hotkey, (s, e) => {
+                    Debug.WriteLine($"[EVENT] {hotkey} 被按下");
+                });
+                Debug.WriteLine($"[SUCCESS] {hotkey} 注册成功");
+                HotkeyHolder.UnregisterHotKey();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[FAILED] {hotkey} 注册失败: {ex.Message}");
+            }
+        }
+
+        private void btnTestMouseKeys_Click(object sender, RoutedEventArgs e)
+        {
+            TestMouseSideButtons();
+            TestMouseSideKeyRegistration();
+        }
     }
 
     public class WindowInfo

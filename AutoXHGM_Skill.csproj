@@ -10,7 +10,7 @@
     <Platforms>AnyCPU;x64</Platforms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Authors>呆呱</Authors>
-    <Version>1.0.0.2</Version>
+    <Version>1.0.0.3</Version>
     <Company>呆呱传媒</Company>
   </PropertyGroup>
 
