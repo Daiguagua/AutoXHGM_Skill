@@ -1,0 +1,21 @@
+﻿<Window x:Class="AutoXHGM_Skill.RegionSelectorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="选择OCR区域" Height="400" Width="600"
+        WindowStyle="None" WindowState="Maximized"
+        AllowsTransparency="True" Background="Transparent"
+        Topmost="True">
+    <Canvas x:Name="overlayCanvas" 
+            MouseMove="OverlayCanvas_MouseMove" 
+            MouseLeftButtonDown="OverlayCanvas_MouseLeftButtonDown"
+            MouseLeftButtonUp="OverlayCanvas_MouseLeftButtonUp">
+        <!-- 半透明覆盖层，用于捕获鼠标事件 -->
+        <Rectangle x:Name="fullScreenOverlay" Fill="#01000000" 
+                   Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Canvas}}"
+                   Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Canvas}}"/>
+        <Rectangle x:Name="selectionRect" Stroke="Red" StrokeThickness="2" 
+                   Fill="#40FF0000" Visibility="Collapsed"/>
+        <TextBlock x:Name="infoText" Foreground="White" Background="#80000000" 
+                   Padding="5" Canvas.Top="10" Canvas.Left="10"/>
+    </Canvas>
+</Window>

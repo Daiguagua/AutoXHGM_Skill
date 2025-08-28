@@ -39,7 +39,7 @@ namespace AutoXHGM_Skill
         private IntPtr _selectedWindowHandle = IntPtr.Zero;
         private bool _isRunning = false;
         private string _configFilePath = "skill_config.json";
-        
+
         private HotkeyHolder _hotkeyHolder = new HotkeyHolder();
         //// 热键注册
         //[DllImport("user32.dll")]
@@ -92,31 +92,54 @@ namespace AutoXHGM_Skill
 
         private readonly List<Ellipse> _debugPoints = new List<Ellipse>();
         private DispatcherTimer _positionUpdateTimer;
+        private DebugOverlayWindow _debugOverlay;
         // 添加初始化调试点的方法
         private void InitializeDebugPoints()
         {
-            debugCanvas.Children.Clear();
-            _debugPoints.Clear();
+            _debugOverlay?.Close();
+            _debugOverlay = new DebugOverlayWindow();
+            _debugOverlay.Show();
+
+            if (_selectedWindowHandle == IntPtr.Zero) return;
+
+            // 获取窗口位置
+            GetWindowRect(_selectedWindowHandle, out RECT windowRect);
+            var clientOffset = Win32PointHelper.GetClientTopLeft(_selectedWindowHandle);
 
             foreach (var rule in Rules.Where(r => r.IsEnabled))
             {
                 foreach (var condition in rule.Conditions)
                 {
-                    var ellipse = new Ellipse
+                    if (condition.IsOcrCondition)
                     {
-                        Width = 6,
-                        Height = 6,
-                        Fill = System.Windows.Media.Brushes.Red,
-                        Stroke = System.Windows.Media.Brushes.White,
-                        StrokeThickness = 1,
-                        Visibility = Visibility.Visible,
-                        Opacity = 0.8
-                    };
+                        // 计算OCR区域在屏幕上的绝对坐标
+                        int absoluteX = windowRect.Left + clientOffset.X + condition.OcrRegionX;
+                        int absoluteY = windowRect.Top + clientOffset.Y + condition.OcrRegionY;
 
-                    debugCanvas.Children.Add(ellipse);
-                    _debugPoints.Add(ellipse);
+                        var region = new System.Drawing.Rectangle(
+                            absoluteX, absoluteY,
+                            condition.OcrRegionWidth, condition.OcrRegionHeight);
+
+                        _debugOverlay.AddDebugRectangle(region, Colors.Blue, $"{rule.Key} OCR");
+                    }
+                    else
+                    {
+                        // 计算颜色点在屏幕上的绝对坐标
+                        int absoluteX = windowRect.Left + clientOffset.X + condition.OffsetX;
+                        int absoluteY = windowRect.Top + clientOffset.Y + condition.OffsetY;
+
+                        _debugOverlay.AddDebugPoint(
+                            new System.Drawing.Point(absoluteX, absoluteY),
+                            Colors.Red,
+                            $"{rule.Key} Color");
+                    }
                 }
             }
+        }
+        private void StopPositionTracking()
+        {
+            _debugOverlay?.Close();
+            _debugOverlay = null;
         }
         // 更新调试点位置
         private void UpdateDebugPoints()
@@ -161,11 +184,6 @@ namespace AutoXHGM_Skill
 
             _positionUpdateTimer.Tick += (s, e) => UpdateDebugPoints();
             _positionUpdateTimer.Start();
-        }
-        private void StopPositionTracking()
-        {
-            _positionUpdateTimer?.Stop();
-            _positionUpdateTimer = null;
         }
         public ObservableCollection<SkillRule> Rules { get; } = new ObservableCollection<SkillRule>();
         private class ConfigData
@@ -686,17 +704,10 @@ namespace AutoXHGM_Skill
                 var rule = new SkillRule
                 {
                     Key = (cbNewKey.SelectedItem as ComboBoxItem)?.Content.ToString(),
+                    IsHoldKey = chkIsHoldKey.IsChecked == true,
+                    HoldDuration = double.TryParse(txtHoldDuration.Text, out double duration) ? duration : 1.0
                     //CheckInterval = 50 // 默认值
                 };
-
-                // 添加默认条件
-                rule.Conditions.Add(new SkillCondition
-                {
-                    OffsetX = 0,
-                    OffsetY = 0,
-                    TargetColor = Color.Blue,
-                    Tolerance = 10
-                });
 
                 Rules.Add(rule);
                 if (_isRunning)
@@ -863,7 +874,7 @@ namespace AutoXHGM_Skill
         private const int SW_RESTORE = 9;
         [DllImport("user32.dll")]
         private static extern bool ClientToScreen(IntPtr hWnd, ref Point lpPoint);
-        private void CheckRules(object sender, EventArgs e)
+        private async void CheckRules(object sender, EventArgs e)
         {
             if (_selectedWindowHandle == IntPtr.Zero) return;
             // 确保游戏窗口激活
@@ -886,102 +897,163 @@ namespace AutoXHGM_Skill
                 // 检查所有条件是否都满足
                 foreach (var condition in rule.Conditions)
                 {
-                    // 计算绝对坐标
+                    bool isMatch = false;
 
-                    int absoluteX = windowRect.Left + clientOffset.X + condition.OffsetX;
-                    int absoluteY = windowRect.Top + clientOffset.Y + condition.OffsetY;
+                    if (condition.IsOcrCondition)
+                    {
+                        // OCR条件检查
+                        isMatch = CheckOcrCondition(condition, windowRect, clientOffset);
+                    }
+                    else
+                    {
+                        // 颜色条件检查（原有逻辑）
+                        int absoluteX = windowRect.Left + clientOffset.X + condition.OffsetX;
+                        int absoluteY = windowRect.Top + clientOffset.Y + condition.OffsetY;
+                        var pixelColor = Win32ColorHelper.GetPixelColor(absoluteX, absoluteY);
+                        isMatch = IsColorMatch(pixelColor, condition.TargetColor, condition.Tolerance);
+                    }
 
-                    // 获取该点颜色
-                    var pixelColor = Win32ColorHelper.GetPixelColor(absoluteX, absoluteY);
-
-                    // 检查颜色是否匹配（考虑容差）
-                    bool isMatch = IsColorMatch(pixelColor, condition.TargetColor, condition.Tolerance);
-                    // 在条件检查后立即记录结果
-                    Debug.WriteLine($"条件#{conditionIndex}: 位置({absoluteX},{absoluteY}) " +
-                                   $"实际颜色:{pixelColor} 目标颜色:{condition.TargetColor} " +
-                                   $"容差:{condition.Tolerance} 匹配:{isMatch}");
-                    Debug.WriteLine($"窗口位置: L{windowRect.Left} T{windowRect.Top}");
-                    Debug.WriteLine($"客户区偏移: X{clientOffset.X} Y{clientOffset.Y}");
-                    Debug.WriteLine($"条件偏移: X{condition.OffsetX} Y{condition.OffsetY}");
-                    Debug.WriteLine($"绝对坐标: X{absoluteX} Y{absoluteY}");
                     // 检查跳过条件
                     if (condition.IsSkipCondition && isMatch)
                     {
                         skipRule = true;
-                        Debug.WriteLine($"跳过规则 {rule.Key}，跳过条件满足");
                         break;
                     }
+
                     // 检查普通条件
                     if (!condition.IsSkipCondition && !isMatch)
                     {
                         allConditionsMet = false;
                         break;
                     }
-                    conditionIndex++;
                 }
                 // 跳过规则或条件不满足
                 if (skipRule || !allConditionsMet) continue;
                 // 执行按键
-                PressKey(rule.Key);
-
-                //// 根据规则频率延迟
-                //if (rule.CheckInterval > 0)
-                //{
-                //    Thread.Sleep(rule.CheckInterval);
-                //}
-                // 只执行匹配的第一个规则
+                PressKey(rule.Key, rule.IsHoldKey, rule.HoldDuration);
+                // 如果是长按技能，添加额外延迟避免冲突
+                if (rule.IsHoldKey)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(100));
+                }
                 break;
             }
         }
+        //private bool CheckOcrCondition(SkillCondition condition, RECT windowRect, Point clientOffset)
+        //{
+        //    try
+        //    {
+        //        // 使用与取色模式相同的坐标计算逻辑
+        //        int absoluteX = windowRect.Left + clientOffset.X + condition.OcrRegionX;
+        //        int absoluteY = windowRect.Top + clientOffset.Y + condition.OcrRegionY;
 
-        private void PressKey(string key)
+        //        // 创建区域对象
+        //        var region = new System.Drawing.Rectangle(
+        //            absoluteX, absoluteY,
+        //            condition.OcrRegionWidth, condition.OcrRegionHeight);
+
+        //        // 绘制调试矩形
+        //        OcrService.DrawDebugRectangle(region, System.Drawing.Color.Red, 1000);
+
+        //        using (var bitmap = CaptureRegion(region))
+        //        using (var graphics = Graphics.FromImage(bitmap))
+        //        {
+        //            graphics.CopyFromScreen(region.Location, System.Drawing.Point.Empty, region.Size);
+
+        //            // 调用OCR识别
+        //            string result = OcrService.RecognizeText(bitmap);
+
+        //            // 计算相似度
+        //            double similarity = OcrService.CalculateSimilarity(result, condition.OcrTextToMatch);
+
+        //            // 根据阈值判断是否匹配
+        //            return similarity * 100 >= condition.OcrSimilarityThreshold;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Debug.WriteLine($"OCR条件检查失败: {ex.Message}");
+        //        return false;
+        //    }
+        //}
+        private bool CheckOcrCondition(SkillCondition condition, RECT windowRect, Point clientOffset)
+        {
+            if (!condition.IsOcrCondition) return false;
+
+            var result = OcrService.RecognizeTextFromRegion(_selectedWindowHandle, condition);
+            return result.IsMatch;
+        }
+        public static Bitmap CaptureRegion(System.Drawing.Rectangle region)
+        {
+            var bitmap = new Bitmap(region.Width, region.Height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+
+            using (var graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.CopyFromScreen(region.Location, System.Drawing.Point.Empty, region.Size);
+
+                // 可选：保存截图用于调试
+                bitmap.Save("debug_screenshot.png", System.Drawing.Imaging.ImageFormat.Png);
+            }
+
+            return bitmap;
+        }
+        private async void PressKey(string key, bool isHoldKey, double holdDuration)
         {
             if (string.IsNullOrEmpty(key)) return;
 
             try
             {
-                // 处理鼠标左键
                 if (key == "鼠标左键")
                 {
-                    _inputSimulator.Mouse.LeftButtonClick();
+                    if (isHoldKey)
+                    {
+                        // 长按鼠标左键
+                        _inputSimulator.Mouse.LeftButtonDown();
+                        await Task.Delay(TimeSpan.FromSeconds(holdDuration));
+                        _inputSimulator.Mouse.LeftButtonUp();
+                    }
+                    else
+                    {
+                        // 单击鼠标左键
+                        _inputSimulator.Mouse.LeftButtonClick();
+                    }
                     return;
                 }
-                // 在PressKey方法中添加
-                if (key == "鼠标滚轮上")
-                    _inputSimulator.Mouse.VerticalScroll(1);
-                else if (key == "鼠标滚轮下")
-                    _inputSimulator.Mouse.VerticalScroll(-1);
-                // 模拟按键
-                _inputSimulator.Keyboard.KeyPress((User32.VK)Enum.Parse(typeof(User32.VK), $"VK_{key}"));
-            }
-            catch
-            {
-                // 处理特殊键
-                switch (key.ToUpper())
+
+                // 处理其他按键
+                User32.VK vkKey = GetVkFromKey(key);
+
+                if (isHoldKey)
                 {
-                    case "Q":
-                        _inputSimulator.Keyboard.KeyPress(User32.VK.VK_Q);
-                        break;
-                    case "E":
-                        _inputSimulator.Keyboard.KeyPress(User32.VK.VK_E);
-                        break;
-                    case "Z":
-                        _inputSimulator.Keyboard.KeyPress(User32.VK.VK_Z);
-                        break;
-                    case "X":
-                        _inputSimulator.Keyboard.KeyPress(User32.VK.VK_X);
-                        break;
-                    case "H":
-                        _inputSimulator.Keyboard.KeyPress(User32.VK.VK_H);
-                        break;
-                    default:
-                        if (int.TryParse(key, out int num))
-                        {
-                            _inputSimulator.Keyboard.KeyPress((User32.VK)(0x30 + num)); // 0x30 = '0'
-                        }
-                        break;
+                    // 长按按键
+                    _inputSimulator.Keyboard.KeyDown(vkKey);
+                    await Task.Delay(TimeSpan.FromSeconds(holdDuration));
+                    _inputSimulator.Keyboard.KeyUp(vkKey);
+                }
+                else
+                {
+                    // 单击按键
+                    _inputSimulator.Keyboard.KeyPress(vkKey);
                 }
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"按键操作失败: {ex.Message}");
+            }
+        }
+
+        // 辅助方法：将按键字符串转换为虚拟键码
+        private User32.VK GetVkFromKey(string key)
+        {
+            return key.ToUpper() switch
+            {
+                "Q" => User32.VK.VK_Q,
+                "E" => User32.VK.VK_E,
+                "Z" => User32.VK.VK_Z,
+                "X" => User32.VK.VK_X,
+                "H" => User32.VK.VK_H,
+                _ => int.TryParse(key, out int num) ? (User32.VK)(0x30 + num) : User32.VK.VK_0
+            };
         }
 
         private bool IsColorMatch(Color color1, Color color2, int tolerance)
@@ -1268,6 +1340,9 @@ namespace AutoXHGM_Skill
         {
             if (dgRules.SelectedItem is SkillRule selectedRule)
             {
+                // 先清除现有调试元素
+                _debugOverlay?.ClearDebugElements();
+
                 if (_selectedWindowHandle == IntPtr.Zero)
                 {
                     System.Windows.MessageBox.Show("请先选择游戏窗口");
@@ -1276,34 +1351,90 @@ namespace AutoXHGM_Skill
 
                 // 获取窗口位置
                 GetWindowRect(_selectedWindowHandle, out RECT windowRect);
+                var clientOffset = Win32PointHelper.GetClientTopLeft(_selectedWindowHandle);
 
                 var result = new StringBuilder();
                 result.AppendLine($"测试规则: {selectedRule.Key}");
                 result.AppendLine($"条件数量: {selectedRule.Conditions.Count}");
 
                 int index = 0;
-                var clientOffset = Win32PointHelper.GetClientTopLeft(_selectedWindowHandle);
+                bool allConditionsMet = true;
+                bool skipRule = false;
                 foreach (var condition in selectedRule.Conditions)
                 {
-                    int absoluteX = windowRect.Left + clientOffset.X + condition.OffsetX;
-                    int absoluteY = windowRect.Top + clientOffset.Y + condition.OffsetY;
+                    bool isMatch = false;
+                    if (condition.IsOcrCondition)
+                    {
+                        // 测试OCR条件
+                        var ocrResult = OcrService.RecognizeTextFromRegion(_selectedWindowHandle, condition);
+                        isMatch = ocrResult.IsMatch;
 
-                    // 获取颜色
-                    var pixelColor = Win32ColorHelper.GetPixelColor(absoluteX, absoluteY);
+                        // 绘制调试矩形
+                        _debugOverlay?.AddDebugRectangle(
+                            ocrResult.Region,
+                            isMatch ? Colors.Green : Colors.Red,
+                            $"条件 #{index} OCR: {isMatch}");
 
-                    // 检查匹配
-                    bool isMatch = IsColorMatch(pixelColor, condition.TargetColor, condition.Tolerance);
+                        result.AppendLine($"条件 #{index} (OCR):");
+                        result.AppendLine($"  区域: ({condition.OcrRegionX}, {condition.OcrRegionY}) {condition.OcrRegionWidth}x{condition.OcrRegionHeight}");
+                        result.AppendLine($"  目标文本: {condition.OcrTextToMatch}");
+                        result.AppendLine($"  识别结果: {ocrResult.Text}");
+                        result.AppendLine($"  相似度: {ocrResult.Similarity:P2}");
+                        result.AppendLine($"  阈值: {condition.OcrSimilarityThreshold}%");
+                    }
+                    else
+                    {
+                        // 测试颜色条件
+                        int absoluteX = windowRect.Left + clientOffset.X + condition.OffsetX;
+                        int absoluteY = windowRect.Top + clientOffset.Y + condition.OffsetY;
 
-                    result.AppendLine($"条件 #{index}:");
-                    result.AppendLine($"  位置: ({absoluteX}, {absoluteY})");
-                    result.AppendLine($"  目标颜色: R:{condition.TargetColor.R} G:{condition.TargetColor.G} B:{condition.TargetColor.B}");
-                    result.AppendLine($"  实际颜色: R:{pixelColor.R} G:{pixelColor.G} B:{pixelColor.B}");
-                    result.AppendLine($"  容差: {condition.Tolerance}");
+                        // 获取颜色
+                        var pixelColor = Win32ColorHelper.GetPixelColor(absoluteX, absoluteY);
+                        isMatch = IsColorMatch(pixelColor, condition.TargetColor, condition.Tolerance);
+
+                        // 绘制调试点
+                        _debugOverlay?.AddDebugPoint(
+                            new System.Drawing.Point(absoluteX, absoluteY),
+                            isMatch ? Colors.Green : Colors.Red,
+                            $"条件 #{index} Color: {isMatch}");
+
+                        result.AppendLine($"条件 #{index} (颜色):");
+                        result.AppendLine($"  位置: ({condition.OffsetX}, {condition.OffsetY})");
+                        result.AppendLine($"  目标颜色: R:{condition.TargetColor.R} G:{condition.TargetColor.G} B:{condition.TargetColor.B}");
+                        result.AppendLine($"  实际颜色: R:{pixelColor.R} G:{pixelColor.G} B:{pixelColor.B}");
+                        result.AppendLine($"  容差: {condition.Tolerance}");
+                    }
                     result.AppendLine($"  跳过规则: {condition.IsSkipCondition}");
                     result.AppendLine($"  匹配: {isMatch}");
                     result.AppendLine();
+                    // 检查跳过条件
+                    if (condition.IsSkipCondition && isMatch)
+                    {
+                        skipRule = true;
+                        break;
+                    }
 
+                    // 检查普通条件
+                    if (!condition.IsSkipCondition && !isMatch)
+                    {
+                        allConditionsMet = false;
+                        break;
+                    }
                     index++;
+                }
+
+                // 显示最终结果
+                if (skipRule)
+                {
+                    result.AppendLine("规则被跳过（跳过条件满足）");
+                }
+                else if (allConditionsMet)
+                {
+                    result.AppendLine("所有条件满足，规则将执行");
+                }
+                else
+                {
+                    result.AppendLine("条件不满足，规则不会执行");
                 }
 
                 System.Windows.MessageBox.Show(result.ToString(), "条件测试结果");
@@ -1312,6 +1443,8 @@ namespace AutoXHGM_Skill
 
         protected override void OnClosed(EventArgs e)
         {
+            // 清理OCR资源
+            OcrService.Dispose();
             //CleanupHwndSource();
             HotkeyHolder.UnregisterHotKey();
             StopPositionTracking();
@@ -1602,6 +1735,28 @@ namespace AutoXHGM_Skill
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+        private bool _isHoldKey;
+        private double _holdDuration = 1.0;
+
+        public bool IsHoldKey
+        {
+            get => _isHoldKey;
+            set
+            {
+                _isHoldKey = value;
+                OnPropertyChanged(nameof(IsHoldKey));
+            }
+        }
+
+        public double HoldDuration
+        {
+            get => _holdDuration;
+            set
+            {
+                _holdDuration = value;
+                OnPropertyChanged(nameof(HoldDuration));
+            }
+        }
     }
 
     public class SkillCondition : INotifyPropertyChanged
@@ -1651,7 +1806,55 @@ namespace AutoXHGM_Skill
             get => _tolerance;
             set { _tolerance = value; OnPropertyChanged(nameof(Tolerance)); }
         }
+        // 新增OCR相关属性
+        private bool _isOcrCondition;
+        public bool IsOcrCondition
+        {
+            get => _isOcrCondition;
+            set { _isOcrCondition = value; OnPropertyChanged(nameof(IsOcrCondition)); }
+        }
 
+        private int _ocrRegionX;
+        public int OcrRegionX
+        {
+            get => _ocrRegionX;
+            set { _ocrRegionX = value; OnPropertyChanged(nameof(OcrRegionX)); }
+        }
+
+        private int _ocrRegionY;
+        public int OcrRegionY
+        {
+            get => _ocrRegionY;
+            set { _ocrRegionY = value; OnPropertyChanged(nameof(OcrRegionY)); }
+        }
+
+        private int _ocrRegionWidth = 100;
+        public int OcrRegionWidth
+        {
+            get => _ocrRegionWidth;
+            set { _ocrRegionWidth = value; OnPropertyChanged(nameof(OcrRegionWidth)); }
+        }
+
+        private int _ocrRegionHeight = 30;
+        public int OcrRegionHeight
+        {
+            get => _ocrRegionHeight;
+            set { _ocrRegionHeight = value; OnPropertyChanged(nameof(OcrRegionHeight)); }
+        }
+
+        private string _ocrTextToMatch = "";
+        public string OcrTextToMatch
+        {
+            get => _ocrTextToMatch;
+            set { _ocrTextToMatch = value; OnPropertyChanged(nameof(OcrTextToMatch)); }
+        }
+
+        private int _ocrSimilarityThreshold = 70;
+        public int OcrSimilarityThreshold
+        {
+            get => _ocrSimilarityThreshold;
+            set { _ocrSimilarityThreshold = value; OnPropertyChanged(nameof(OcrSimilarityThreshold)); }
+        }
         [JsonIgnore]
         public string TargetColorHex => $"#{TargetColor.R:X2}{TargetColor.G:X2}{TargetColor.B:X2}";
         [JsonIgnore]

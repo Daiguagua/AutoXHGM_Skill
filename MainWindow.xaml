@@ -8,6 +8,7 @@
         Title="星痕共鸣技能循环助手" Height="700" Width="900" WindowStartupLocation="CenterScreen"
         Icon="app.ico">
     <Window.Resources>
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style TargetType="Button">
             <Setter Property="Margin" Value="5"/>
             <Setter Property="Padding" Value="8 4"/>
@@ -133,8 +134,9 @@
                         <DataGrid.Columns>
                             <DataGridCheckBoxColumn Header="启用" Binding="{Binding IsEnabled}" Width="50"/>
                             <DataGridTextColumn Header="技能按键" Binding="{Binding Key}" Width="80"/>
+                            <DataGridTextColumn Header="长按" Binding="{Binding IsHoldKey}" Width="50"/>
+                            <DataGridTextColumn Header="持续时间" Binding="{Binding HoldDuration}" Width="60"/>
                             <DataGridTextColumn Header="条件数量" Binding="{Binding Conditions.Count}" Width="80"/>
-                            <!--<DataGridTextColumn Header="检测频率(ms)" Binding="{Binding CheckInterval}" Width="100"/>-->
                             <DataGridTemplateColumn Header="操作" Width="*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -154,6 +156,7 @@
                     <StackPanel >
                         <Label Content="全局检测频率 (ms):"/>
                         <TextBox x:Name="txtGlobalInterval" Text="50"/>
+                        
                         <!-- 添加热键设置 -->
                         <CheckBox x:Name="chkstartCtrl" Content="Ctrl" Margin="0,0,5,0" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
                         <CheckBox x:Name="chkstartShift" Content="Shift" Margin="0,0,5,0" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
@@ -296,7 +299,12 @@
                             <ComboBoxItem>H</ComboBoxItem>
                             <ComboBoxItem>鼠标左键</ComboBoxItem>
                         </ComboBox>
-
+                        <!-- 添加长按设置 -->
+                        <CheckBox x:Name="chkIsHoldKey" Content="长按释放" Margin="5"/>
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsChecked, ElementName=chkIsHoldKey, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Label Content="持续时间(秒):"/>
+                            <TextBox x:Name="txtHoldDuration" Width="60" Text="1.0" Margin="5,0,0,0"/>
+                        </StackPanel>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

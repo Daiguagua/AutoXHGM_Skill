@@ -5,6 +5,8 @@
              StartupUri="MainWindow.xaml"
     DispatcherUnhandledException="Application_DispatcherUnhandledException">
     <Application.Resources>
-         
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <local:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
     </Application.Resources>
+    
 </Application>

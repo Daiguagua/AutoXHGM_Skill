@@ -14,6 +14,7 @@ using WMBrushes = System.Windows.Media.Brushes;
 // 修改1：在类顶部添加别名（可选但推荐）
 using WMColor = System.Windows.Media.Color;
 using WMImage = System.Windows.Controls.Image;
+using System.Drawing; // 确保使用 System.Drawing
 namespace AutoXHGM_Skill
 {
     public class ProfessionalColorPicker
@@ -237,8 +238,8 @@ namespace AutoXHGM_Skill
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
                 g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
                 g.DrawImage(_screenCapture,
-                    new Rectangle(0, 0, magnifierSize, magnifierSize),
-                    new Rectangle(srcStartX, srcStartY, srcWidth, srcHeight),
+                    new System.Drawing.Rectangle(0, 0, magnifierSize, magnifierSize),
+                    new System.Drawing.Rectangle(srcStartX, srcStartY, srcWidth, srcHeight),
                     GraphicsUnit.Pixel);
 
                 // 绘制精确的十字线（对准像素中心）
