@@ -1,4 +1,4 @@
-﻿using AutoXHGM_Skill.Fischless.HotkeyCapture;
+﻿using Skill_Loop.Fischless.HotkeyCapture;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;

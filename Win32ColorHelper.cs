@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     internal class Win32ColorHelper
     {

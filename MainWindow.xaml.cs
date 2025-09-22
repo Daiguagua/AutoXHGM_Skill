@@ -22,7 +22,7 @@ using Vanara.PInvoke;
 using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -216,7 +216,7 @@ namespace AutoXHGM_Skill
             _trayIcon = new TaskbarIcon
             {
                 Icon = CreateIconFromVisual(this), // 从窗口创建图标
-                ToolTipText = "星痕共鸣技能循环助手",
+                ToolTipText = "技能循环助手",
                 Visibility = Visibility.Visible
             };
 
@@ -481,76 +481,6 @@ namespace AutoXHGM_Skill
                 _ => (Keys)Enum.Parse(typeof(Keys), keyStr, true)
             };
         }
-        // 在窗口关闭时注销热键
-
-        //private void RegisterHotKeyInternal(IntPtr handle)
-        //{
-        //    uint startVk = GetVkCode(_startHotKey);
-        //    uint stopVk = GetVkCode(_stopHotKey);
-
-        //    // 注册启动热键
-        //    if (!RegisterHotKey(handle, HOTKEY_ID_START, MOD_NONE, startVk))
-        //    {
-        //        Debug.WriteLine($"启动热键注册失败: {_startHotKey}");
-        //    }
-        //    else
-        //    {
-        //        Debug.WriteLine($"启动热键注册成功: {_startHotKey}");
-        //    }
-
-        //    // 注册停止热键（如果不同）
-        //    if (startVk != stopVk)
-        //    {
-        //        if (!RegisterHotKey(handle, HOTKEY_ID_STOP, MOD_NONE, stopVk))
-        //        {
-        //            Debug.WriteLine($"停止热键注册失败: {_stopHotKey}");
-        //        }
-        //        else
-        //        {
-        //            Debug.WriteLine($"停止热键注册成功: {_stopHotKey}");
-        //        }
-        //    }
-        //}
-        //private async Task InitializeHotkeysAsync()
-        //{
-        //    const int maxAttempts = 10;
-        //    const int delayMs = 200;
-
-        //    for (int attempt = 1; attempt <= maxAttempts; attempt++)
-        //    {
-        //        try
-        //        {
-        //            var helper = new WindowInteropHelper(this);
-        //            helper.EnsureHandle();
-
-        //            if (helper.Handle != IntPtr.Zero)
-        //            {
-        //                var source = HwndSource.FromHwnd(helper.Handle);
-        //                if (source != null)
-        //                {
-        //                    _source = source;
-        //                    _source.AddHook(HwndHook);
-        //                    RegisterHotKeyInternal(helper.Handle);
-
-        //                    Debug.WriteLine($"热键注册成功 (尝试 {attempt}/{maxAttempts})");
-        //                    return;
-        //                }
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Debug.WriteLine($"尝试 {attempt} 失败: {ex.Message}");
-        //        }
-
-        //        if (attempt < maxAttempts)
-        //        {
-        //            await Task.Delay(delayMs);
-        //        }
-        //    }
-
-        //    Debug.WriteLine("所有热键注册尝试均失败");
-        //    ShowHotkeyError();
-        //}
 
         private void ShowHotkeyError()
         {
@@ -559,23 +489,7 @@ namespace AutoXHGM_Skill
                 "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
-        //private void UnregisterHotkeys()
-        //{
-        //    //try
-        //    //{
-        //    var helper = new WindowInteropHelper(this);
-        //    HotkeyHolder.UnregisterHotKey(helper.Handle, HOTKEY_ID_START);
-        //    HotkeyHolder.UnregisterHotKey(helper.Handle, HOTKEY_ID_STOP);
 
-        //    // 额外添加安全注销
-        //    for (int i = 0; i < 10; i++) // 尝试注销多个可能的ID
-        //    {
-        //        HotkeyHolder.UnregisterHotKey(helper.Handle, i);
-        //    }
-        //}
-        //    }
-        //    catch { /* 忽略注销错误 */ }
-        //}
         private uint GetVkCode(string hotkeyName)
         {
             return hotkeyName switch
@@ -664,11 +578,11 @@ namespace AutoXHGM_Skill
                         };
 
                         // 检查是否是目标游戏窗口
-                        if (title.ToString().Contains("star") ||
-                            GetProcessName(hWnd).ToLower().Contains("star"))
-                        {
+                        //if (title.ToString().Contains("star") ||
+                        //    GetProcessName(hWnd).ToLower().Contains("star"))
+                        //{
                             _gameWindows.Add(windowInfo);
-                        }
+                        //}
                     }
                 }
                 return true;

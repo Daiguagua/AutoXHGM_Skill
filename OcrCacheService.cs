@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     // OcrCacheService.cs
     // OcrCacheService.cs

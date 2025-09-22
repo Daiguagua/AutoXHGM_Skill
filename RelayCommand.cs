@@ -1,6 +1,6 @@
 ﻿using System.Windows.Input;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     public class RelayCommand : ICommand
     {

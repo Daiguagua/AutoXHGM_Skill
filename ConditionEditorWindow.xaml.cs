@@ -11,7 +11,7 @@ using System.Windows.Media;
 using Vanara.PInvoke;
 //using System.Windows.Forms;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     //public class BooleanToVisibilityConverter : IValueConverter
     //{

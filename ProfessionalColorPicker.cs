@@ -15,7 +15,7 @@ using WMBrushes = System.Windows.Media.Brushes;
 using WMColor = System.Windows.Media.Color;
 using WMImage = System.Windows.Controls.Image;
 using System.Drawing; // 确保使用 System.Drawing
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     public class ProfessionalColorPicker
     {

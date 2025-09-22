@@ -1,6 +1,6 @@
 ﻿namespace Fischless.HotkeyCapture;
 
-using AutoXHGM_Skill.Fischless.HotkeyCapture;
+using Skill_Loop.Fischless.HotkeyCapture;
 using System.Diagnostics;
 using System.Windows.Forms;
 using Vanara.PInvoke;

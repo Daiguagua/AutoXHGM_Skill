@@ -6,7 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     public partial class RegionSelectorWindow : Window
     {

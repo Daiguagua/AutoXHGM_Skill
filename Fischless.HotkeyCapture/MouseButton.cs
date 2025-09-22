@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AutoXHGM_Skill.Fischless.HotkeyCapture
+namespace Skill_Loop.Fischless.HotkeyCapture
 {
     public enum MouseButton
     {

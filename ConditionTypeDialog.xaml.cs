@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     public enum ConditionType
     {

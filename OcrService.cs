@@ -11,7 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     public static class OcrService
     {

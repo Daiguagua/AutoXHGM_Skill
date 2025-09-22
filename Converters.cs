@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     public class BooleanToVisibilityConverter : IValueConverter
     {

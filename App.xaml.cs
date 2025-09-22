@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace AutoXHGM_Skill
+namespace Skill_Loop
 {
     /// <summary>
     /// Interaction logic for App.xaml
