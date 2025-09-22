@@ -1,8 +1,10 @@
-星痕共鸣技能循环助手
-上班摸鱼产物，代码也大部分都是deepseek写的，因为太刀循环太麻烦了，所以写个小程序，开源给各位太刀虾一起用hh（以下README 由deepseek亲自完成x 因为本人也不太会用github hh 
+傻呗星痕共鸣，滚出我电脑
+
+技能循环助手
+上班摸鱼产物，代码也大部分都是deepseek写的hh
 
 项目概述
-这是一个为游戏《星痕共鸣》设计的技能循环自动化工具。程序通过检测游戏窗口中特定位置的颜色条件，自动触发预设的技能按键序列，帮助玩家实现高效的技能循环。
+这是一个技能循环自动化工具。程序通过检测游戏窗口中特定位置的颜色条件，自动触发预设的技能按键序列，帮助玩家实现高效的技能循环。
 
 主要功能
 智能技能触发：根据屏幕特定位置的颜色条件自动释放技能
@@ -26,7 +28,7 @@ Fischless.WindowsInput (输入模拟库)
 
 Hardcodet.Wpf.TaskbarNotification (系统托盘库)
 
-特别感谢 Fischless.WindowsInput 库提供的高质量输入模拟功能。
+特别感谢 Fischless提供的高质量输入模拟功能。
 https://github.com/GenshinMatrix/Fischless
 
 使用说明
@@ -36,7 +38,7 @@ https://github.com/GenshinMatrix/Fischless
 基本使用步骤
 启动程序
 
-双击运行 AutoXHGM_Skill.exe
+双击运行 Skill_Loop.exe
 
 选择游戏窗口
 
